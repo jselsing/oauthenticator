@@ -5,6 +5,7 @@ import base64
 import os
 from urllib.parse import urlencode
 import jwt
+import json
 
 from jupyterhub.auth import LocalAuthenticator
 from tornado.httpclient import AsyncHTTPClient
@@ -116,9 +117,7 @@ class CognitoOAuthenticator(OAuthenticator):
         return self.fetch(req, "fetching access token")
 
     def _get_user_data(self, token_response):
-        access_token = token_response['access_token']
         id_token = token_response['id_token']
-        token_type = token_response['token_type']
 
         # Determine who the logged in user is from the id token
         return jwt.decode(id_token, options={"verify_signature": False})
@@ -158,7 +157,7 @@ class CognitoOAuthenticator(OAuthenticator):
 
         token_resp_json = await self._get_token(headers, params)
 
-        user_data_resp_json = await self._get_user_data(token_resp_json)
+        user_data_resp_json = self._get_user_data(token_resp_json)
 
         if callable(self.username_key):
             name = self.username_key(user_data_resp_json)
